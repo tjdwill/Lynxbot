@@ -31,8 +31,8 @@
   // Servo variables
 #define GRIPPER_ID (209)
 #define GRIPPER_OPEN (450) //Just for visual use. MANUAL SEND COMMAND: #209D450
-#define GRIPPER_CLOSED (1500) //MANUAL COMMAND: (SoftwareSerial_object).write(#209D1800\r)
-//#define GRIPPER_LIMP #209L\r
+#define GRIPPER_CLOSED (1500) //MANUAL COMMAND: (SoftwareSerial_object).write("#209D1800\r")
+//#define GRIPPER_LIMP "#209L\r"
 
   // LSS Variables
 #define LSS_ID1    (1)
@@ -40,13 +40,15 @@
 #define LSS_ID3    (3)
 #define LSS_BAUD  (LSS_DefaultBaud)  //115200
 #define MAX_ANGLE_DIFF (100)
-#define SLOW_MOVE_RATE (2) //ms per tenth of a degree. Ex. moving 500 units should take 1000 ms 
+#define SLOW_MOVE_RATE (2) //ms per tenth of a degree. Ex. moving 500 units should take 1000 ms
+
 // Create Objects
 SoftwareSerial LSS_Serial(8, 9);  //makes arduino pins 8 and 9 the serial Rx and Tx for the LSS bus.
 LSS myLSS1 = LSS(LSS_ID1); // Servos on the Lynxmotion Robot Arm (ID1 = Base rotation)
 LSS myLSS2 = LSS(LSS_ID2); // -angle values move end effector down (CCW servo rotation); wider range of motion (-750 to 200)
 LSS myLSS3 = LSS(LSS_ID3); // -angle values move end effector back (contraction)
 LSS gripper = LSS(GRIPPER_ID); //interact with gripper using LSS Protocol.
+
 /* declare an array populated with dummy values for positions
 *FORM: [[RED], [YELLOW], [GREEN],[BLUE]]
 * For example, if positions = [[P1],[P2],[HOME],[P3]],
@@ -65,7 +67,7 @@ int current_color = 2; // current object pos (default to GREEN)
 
 // Variables for Python Communication 
 bool readyForInput = true;
-int incomingByte = -2; // a variable to read incoming serial data into
+int incomingByte = -2; // a variable to read incoming serial data
 int fill_cnt = 0; 
 char dumBuffer[8];
 
@@ -92,7 +94,7 @@ void setup() {
   LSS_Serial.write("#207LED0\r");
 
   // ESTABLISH Python Comms
-  Serial.begin(19200); //Python Communication Baudrate
+  Serial.begin(19200); // Python Communication Baudrate
   delay(30); // give time to connect with python
   while (!Serial){
     ;
@@ -100,6 +102,7 @@ void setup() {
   Serial.print("LYNX: Associate Colors.\n");
   delay(SERIAL_DELAY*10);
   Serial.print('I'); // tell Python we're ready
+ 
   // populate positions array: WHAT COLOR is associated with the position?
   while(fill_cnt != 4){
     
@@ -245,7 +248,10 @@ void populateArray(int master[4][ARRAYSIZE], int entry[ARRAYSIZE], int place){
     master[place][i] = entry[i];
   }
 }
-
+/*
+* void moveArm
+* Performs the pick and place operation
+*/
 void moveArm(int target[3]){
   // wake up LSSs
   resetLynx();
@@ -268,7 +274,6 @@ void moveArm(int target[3]){
   delay(SERIAL_DELAY);
   int32_t currS3 = myLSS3.getPosition();
   delay(SERIAL_DELAY);
-  // CONSOLE Check: REMOVE FOR PYTHON OPERATION
 
  /* PICK & PLACE
   *
