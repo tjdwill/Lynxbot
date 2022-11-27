@@ -23,14 +23,9 @@ global SERIAL_SLEEP
 
 # Functions
 
-'''
-handleSerErr:
-Allows program to exit upon disconnecting from serial line.    
-    
-'''
-
-
 def handleSerErr():
+    """Allows program to exit properly upon disconnecting from serial line."""
+
     arduino.__del__()  # close port
     cv.destroyAllWindows()
     cap.release()  # Release Camera
@@ -38,8 +33,9 @@ def handleSerErr():
     
     
 def img_mask(image):
-    # input raw image
-    # outputs array of masked images (red, yellow, green, blue, original)
+    """ input raw image
+        outputs array of masked images (red, yellow, green, blue)
+    """
     img_hsv = cv.cvtColor(image, cv.COLOR_BGR2HSV)
 
     # Generate HSV Thresholds
@@ -76,7 +72,7 @@ def img_mask(image):
     return output
 
 
-def colorDetect()->int:
+def colorDetect() -> int:
     consec_detections = 0  # Tracks how many consecutive images detect a given color
     while True:
         _, img = cap.read()
@@ -90,7 +86,7 @@ def colorDetect()->int:
         #     3. Segment the frame into a variable consisting solely of the subregion
         #     4. Apply relevant masking and filtering
         #     5. Perform bitwise AND operation to isolate the desired color.
-        #     6. If center pixel is not black, that color is present (in theory).
+        #     6. If center pixel is not black, that color is present.
         #
         # =============================================================================
 
@@ -178,23 +174,24 @@ def send_color(pic_num: int, serial_line):
         print("Invalid data.\n")
 
 
-# Setup
+#----Program Setup----#
 
-# Camera Stuff
+# Camera Variables
 SATURATION_LOWER = 50
 SATURATION_MAX = 255  # Max 'S' value in HSV
 BRIGHTNESS_LOWER = 20
 BRIGHTNESS_MAX = 255  # Max 'V' Value in HSV
 DETECTION_THRESH = 110  # Number of consecutive detects required to be sure the color is present.
 
-# Set up webcam
+# Set up webcam (laptop)
 cap = cv.VideoCapture(0)
 
-# Serial
+# Serial Variables
 BAUD_RATE = 19200
 SERIAL_TIMEOUT = 5  # (in seconds)
 serial_connected = False
 
+#----Begin Program---#
 while not serial_connected:
     try:
         arduino = serial.Serial(port='COM10', baudrate=BAUD_RATE, timeout=SERIAL_TIMEOUT)
@@ -209,8 +206,7 @@ SERIAL_SLEEP = 0.05  # HOW LONG (in seconds) to delay
 arduino_ready = False
 program_started = False
 
-"""Find a way to send a QUIT signal 'q'"""
-
+# Wait for Arduino to claim readiness
 while not program_started:
     print("PYTHON: Awaiting Start signal...")
     try:
@@ -225,10 +221,10 @@ while not program_started:
         handleSerErr()
     sleep(2)
 
+# Enter color detection/transmission loop
 while True:
-    
     if not arduino_ready:
-        #   check for serial data
+        # check for serial data
         try:
             if arduino.in_waiting > 0:
                 check_data = arduino.read(1)
